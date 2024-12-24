@@ -66,8 +66,14 @@ with DAG(
                      f'--source {links_dir} '
     )
 
+    transform_data = BashOperator(
+        task_id='transform_data',
+        bash_command=f'python {base_path}/scripts/python/transform.py '
+                     f'--destination {transformed_dir} '
+    )
+
     end_task = DummyOperator(
         task_id='end',
     )
 
-    start_task >> download_files >> extract_links_from_files >> load_links >> end_task
+    start_task >> download_files >> extract_links_from_files >> load_links >> transform_data >> end_task
