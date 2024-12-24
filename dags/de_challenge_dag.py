@@ -13,9 +13,7 @@ default_args = {
     'retry_delay': timedelta(minutes=5),
 }
 
-
-
-with DAG(
+with (DAG(
         'de_challenge',
         default_args=default_args,
         description='Download and process links',
@@ -23,8 +21,7 @@ with DAG(
         start_date=datetime(2024, 12, 20),
         catchup=False,
         tags=['commoncrawl', 'download', 'elaboration', 'report', 'metrics'],
-) as dag:
-
+) as dag):
     base_path = Variable.get("base_path", default_var="/opt/airflow")
     file_format = Variable.get("file_format", default_var="WET")
     crawl_version = Variable.get("crawl_data_version", default_var="CC-MAIN-2024-46")
@@ -72,8 +69,16 @@ with DAG(
                      f'--destination {transformed_dir} '
     )
 
+    calculate_metrics = BashOperator(
+        task_id='calculate_metrics',
+        bash_command=f'python {base_path}/scripts/python/calculate_metrics.py '
+                     f'--source {transformed_dir} '
+                     f'--destination {metrics_dir} '
+    )
+
     end_task = DummyOperator(
         task_id='end',
     )
 
-    start_task >> download_files >> extract_links_from_files >> load_links >> transform_data >> end_task
+    start_task >> download_files >> extract_links_from_files >> load_links
+    load_links >> transform_data >> calculate_metrics >> end_task
