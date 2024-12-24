@@ -1,0 +1,54 @@
+# Python
+*.py[cod]
+__pycache__/
+*.pyo
+*.pyd
+.Python
+
+# VEnv
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Build
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+
+# PyCharm
+.idea/
+*.iml
+workspace.xml
+tasks.xml
+deployment.xml
+
+# Docker
+*.env
+docker-compose.override.yml
+
+# Log and temp
+logs/
+*.log
+*.tmp
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Test
+coverage.xml
+*.cover
+.hypothesis/
+pytest_cache/
+.tox/
+nosetests.xml
+*.test.db
+
+# Airflow and Docker
+logs/
+data/
+logs/
