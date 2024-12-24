@@ -33,6 +33,8 @@ with DAG(
     max_filtered = Variable.get("max_filtered", default_var="0")
 
     links_dir = Variable.get("link_dir", default_var=f"{base_path}/data/extracted/{file_format.lower()}")
+    transformed_dir = Variable.get("transformed_dir", default_var=f"{base_path}/data/transformed/")
+    metrics_dir = Variable.get("metrics_dir", default_var=f"{base_path}/data/metrics/")
 
     start_task = DummyOperator(
         task_id='start',
@@ -58,8 +60,14 @@ with DAG(
                      f'--format {file_format.lower()} '
     )
 
+    load_links = BashOperator(
+        task_id='load_links',
+        bash_command=f'python {base_path}/scripts/python/load_links.py '
+                     f'--source {links_dir} '
+    )
+
     end_task = DummyOperator(
         task_id='end',
     )
 
-    start_task >> download_files >> extract_links_from_files >> end_task
+    start_task >> download_files >> extract_links_from_files >> load_links >> end_task
