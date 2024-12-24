@@ -32,6 +32,8 @@ with DAG(
     raw_dir = Variable.get("raw_dir", default_var=f"{base_path}/data/raw/{file_format.lower()}")
     max_filtered = Variable.get("max_filtered", default_var="0")
 
+    links_dir = Variable.get("link_dir", default_var=f"{base_path}/data/extracted/{file_format.lower()}")
+
     start_task = DummyOperator(
         task_id='start',
     )
@@ -48,8 +50,16 @@ with DAG(
         retry_delay=timedelta(seconds=5),
     )
 
+    extract_links_from_files = BashOperator(
+        task_id=f'extract_links_from_files',
+        bash_command=f'python {base_path}/scripts/python/extract_links.py '
+                     f'--source {raw_dir} '
+                     f'--destination {links_dir} '
+                     f'--format {file_format.lower()} '
+    )
+
     end_task = DummyOperator(
         task_id='end',
     )
 
-    start_task >> download_files >> end_task
+    start_task >> download_files >> extract_links_from_files >> end_task
