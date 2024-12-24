@@ -32,6 +32,7 @@ with (DAG(
     links_dir = Variable.get("link_dir", default_var=f"{base_path}/data/extracted/{file_format.lower()}")
     transformed_dir = Variable.get("transformed_dir", default_var=f"{base_path}/data/transformed/")
     metrics_dir = Variable.get("metrics_dir", default_var=f"{base_path}/data/metrics/")
+    parallelism = Variable.get("parallelism", default_var=1)  # TODO Manage multiple downloading and extracting files
 
     start_task = DummyOperator(
         task_id='start',
@@ -49,19 +50,22 @@ with (DAG(
         retry_delay=timedelta(seconds=5),
     )
 
-    extract_links_from_files = BashOperator(
-        task_id=f'extract_links_from_files',
-        bash_command=f'python {base_path}/scripts/python/extract_links.py '
-                     f'--source {raw_dir} '
-                     f'--destination {links_dir} '
-                     f'--format {file_format.lower()} '
-    )
-
     load_links = BashOperator(
         task_id='load_links',
         bash_command=f'python {base_path}/scripts/python/load_links.py '
                      f'--source {links_dir} '
     )
+
+    for i in range(0, parallelism):
+        extract_links_from_files = BashOperator(
+            task_id=f'extract_links_from_files_{i}',
+            bash_command=f'python {base_path}/scripts/python/extract_links.py '
+                         f'--source {raw_dir} '
+                         f'--destination {links_dir} '
+                         f'--format {file_format.lower()} '
+        )
+
+        download_files >> extract_links_from_files >> load_links
 
     transform_data = BashOperator(
         task_id='transform_data',
@@ -80,5 +84,5 @@ with (DAG(
         task_id='end',
     )
 
-    start_task >> download_files >> extract_links_from_files >> load_links
+    start_task >> download_files
     load_links >> transform_data >> calculate_metrics >> end_task
